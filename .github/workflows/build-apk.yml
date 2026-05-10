@@ -1,0 +1,115 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.7'
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Generate android/ folder
+        run: |
+          flutter create \
+            --org com.amir.egyptianrace \
+            --project-name egyptian_race \
+            --platforms=android \
+            --description "Egyptian Race" \
+            .
+
+      - name: Patch minSdk = 24
+        run: |
+          GRADLE_KTS=android/app/build.gradle.kts
+          if [ -f "$GRADLE_KTS" ]; then
+            sed -i -E 's/minSdk *= *flutter\.minSdkVersion/minSdk = 24/' "$GRADLE_KTS"
+            sed -i -E 's/minSdk *= *[0-9]+/minSdk = 24/' "$GRADLE_KTS"
+          fi
+
+      - name: Generate release keystore
+        run: |
+          keytool -genkey -v \
+            -keystore android/app/release.jks \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -alias egyptian-race \
+            -storepass eg-race-2026 \
+            -keypass eg-race-2026 \
+            -dname "CN=Egyptian Race, OU=Game, O=Amir, L=Cairo, ST=Cairo, C=EG"
+          cat > android/key.properties <<EOF
+          storePassword=eg-race-2026
+          keyPassword=eg-race-2026
+          keyAlias=egyptian-race
+          storeFile=release.jks
+          EOF
+
+      - name: Patch gradle.kts for signing
+        run: python3 .tools/patch_gradle.py android/app/build.gradle.kts
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: flutter analyze (non-blocking)
+        run: flutter analyze || true
+
+      - name: flutter test
+        run: flutter test || true
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             dist/egyptian_race-1.0.0.apk
+          ls -lh dist/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: egyptian_race-apk
+          path: dist/egyptian_race-1.0.0.apk
+          retention-days: 30
+
+      - name: Create / update GitHub Release
+        if: github.ref_name != 'main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-${{ github.ref_name == 'main' && 'main' || 'beta' }}
+          name: السباق المصري — Latest Build (${{ github.ref_name }})
+          body: |
+            ### 🐫 السباق المصري — أحدث build
+
+            APK جاهز للتثبيت على Android 7+ (API 24+).
+
+            **التثبيت:** نزّل `egyptian_race-1.0.0.apk` على موبايلك،
+            فعّل "Install from Unknown Sources"، اضغط على الملف.
+
+            **commit:** `${{ github.sha }}`
+            **build:** ${{ github.run_number }}
+          files: dist/egyptian_race-1.0.0.apk
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
