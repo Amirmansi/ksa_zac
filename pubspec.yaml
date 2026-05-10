@@ -1,0 +1,52 @@
+name: egyptian_race
+description: السباق المصري - لعبة سباق طولية مصرية مجانية أوفلاين
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Game engine
+  flame: ^1.18.0
+  flame_audio: ^2.10.0
+
+  # State management & navigation
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.0
+
+  # Local storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.3.2
+
+  # UI & fonts
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+
+  # Utils
+  vibration: ^2.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.13
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/characters/
+    - assets/images/tiles/
+    - assets/images/icons/
+    - assets/audio/sfx/
+    - assets/audio/music/
