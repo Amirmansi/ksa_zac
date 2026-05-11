@@ -1,6 +1,7 @@
-import 'dart:ui';
+import 'dart:ui' show Canvas, Offset, Paint, PaintingStyle, RRect, Radius;
 
 import 'package:flame/components.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart' show Colors;
 
 import '../../core/colors.dart';

@@ -39,6 +39,9 @@ jobs:
             --platforms=android \
             --description "Egyptian Race" \
             .
+          # Remove the auto-generated default widget test that references
+          # MyApp (which doesn't exist in our project — we have our own tests).
+          rm -f test/widget_test.dart
 
       - name: Patch minSdk = 24
         run: |
